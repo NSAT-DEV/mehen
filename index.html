@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mehen — Game of the Snake</title>
+<meta name="description" content="Mehen: an iOS reconstruction of the 5,000-year-old Egyptian marble-guessing board game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-top:#12141b;
+    --bg-bottom:#171e2c;
+    --panel:#1d2432;
+    --panel-line:rgba(230,179,26,0.16);
+    --ink:#efe2d3;
+    --ink-dim:#9c9184;
+    --gold:#e2b13c;
+    --gold-dim:#a67f28;
+    --lapis:#3d6e8f;
+    --snake:#3a9142;
+    --space-a:#b98a52;
+    --space-b:#8f6a3f;
+    --max:1120px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+  body{
+    background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom) 40%, var(--bg-top));
+    color:var(--ink);
+    font-family:'Spectral', Georgia, serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  .wrap{max-width:var(--max); margin:0 auto; padding:0 28px;}
+  h1,h2,h3,.display{font-family:'Cinzel', serif; letter-spacing:0.02em; font-weight:600; text-transform:none;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:''; width:22px; height:1px; background:var(--gold-dim);}
+
+  /* ---------- glyph field ---------- */
+  .glyphfield{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0;}
+  .glyphfield span{position:absolute; color:rgba(239,226,211,0.06); font-size:34px;}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(18,20,27,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--panel-line);
+  }
+  nav .wrap{display:flex; align-items:center; justify-content:space-between; height:64px;}
+  .logo{display:flex; align-items:center; gap:10px; font-family:'Cinzel',serif; font-weight:600; font-size:17px; letter-spacing:0.06em;}
+  .logo .glyph{font-size:22px; color:var(--snake); text-shadow:0 0 14px rgba(58,145,66,0.55);}
+  nav ul{display:flex; gap:30px; list-style:none;}
+  nav ul a{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-dim); text-decoration:none; transition:color .2s;}
+  nav ul a:hover, nav ul a:focus-visible{color:var(--gold);}
+  .navcta{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    border:1px solid var(--gold-dim); color:var(--gold); padding:8px 16px; border-radius:3px; text-decoration:none;
+    transition:background .2s,color .2s;
+  }
+  .navcta:hover{background:var(--gold); color:#161104;}
+  @media (max-width:760px){ nav ul{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{position:relative; padding:96px 0 80px; overflow:hidden;}
+  .hero .wrap{position:relative; z-index:2; display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;}
+  @media (max-width:900px){ .hero .wrap{grid-template-columns:1fr;} .hero{padding:64px 0 56px;} }
+
+  .hero h1{font-size:clamp(48px,7vw,74px); line-height:0.98; color:var(--ink); margin:18px 0 4px;}
+  .hero .sub{font-family:'Cinzel',serif; font-size:16px; color:var(--gold); letter-spacing:0.08em; margin-bottom:18px;}
+  .hero p.lede{color:var(--ink-dim); font-size:18px; max-width:46ch; margin-bottom:34px;}
+  .hero-ctas{display:flex; gap:14px; flex-wrap:wrap;}
+
+  .btn{
+    font-family:'Cinzel',serif; font-size:14px; letter-spacing:0.04em; text-decoration:none;
+    padding:15px 28px; border-radius:26px; display:inline-flex; align-items:center; gap:10px;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--gold); color:#1a1204; box-shadow:0 10px 26px -8px rgba(226,177,60,0.55);}
+  .btn-primary:hover{box-shadow:0 14px 30px -8px rgba(226,177,60,0.7);}
+  .btn-ghost{border:1px solid var(--panel-line); color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--gold-dim); color:var(--gold);}
+
+  .hero-visual{position:relative; aspect-ratio:1/1; max-width:460px; margin:0 auto;}
+  .hero-visual svg{width:100%; height:100%;}
+  #piece{ offset-rotate:0deg; }
+
+  /* ---------- section shell ---------- */
+  section{position:relative; padding:96px 0;}
+  section + section{border-top:1px solid var(--panel-line);}
+  .section-head{max-width:640px; margin-bottom:52px;}
+  .section-head h2{font-size:clamp(30px,4vw,40px); margin-top:14px; color:var(--ink);}
+  .section-head p{color:var(--ink-dim); margin-top:14px; font-size:17px;}
+
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1; transform:none;}
+
+  /* ---------- origin ---------- */
+  .origin-grid{display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px; align-items:start;}
+  @media (max-width:860px){ .origin-grid{grid-template-columns:1fr;} }
+  .origin-grid p + p{margin-top:16px;}
+  .origin-grid .cite{
+    margin-top:28px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim);
+    border-left:2px solid var(--gold-dim); padding-left:14px;
+  }
+  .coil-diagram{background:var(--panel); border:1px solid var(--panel-line); border-radius:14px; padding:28px;}
+  .coil-diagram svg{width:100%; height:auto; display:block;}
+  .coil-legend{display:flex; flex-direction:column; gap:10px; margin-top:20px;}
+  .coil-legend div{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim);}
+  .coil-legend i{width:10px; height:10px; border-radius:50%; display:inline-block; flex:none;}
+
+  /* ---------- journey (structural sequence — real gameplay stages) ---------- */
+  .journey{display:flex; flex-direction:column; border:1px solid var(--panel-line); border-radius:14px; overflow:hidden;}
+  .journey-row{
+    display:grid; grid-template-columns:96px 1fr; gap:0;
+    border-bottom:1px solid var(--panel-line);
+    background:var(--panel);
+  }
+  .journey-row:last-child{border-bottom:none;}
+  .journey-mark{
+    display:flex; align-items:center; justify-content:center;
+    font-size:30px; color:var(--snake);
+    border-right:1px solid var(--panel-line);
+  }
+  .journey-body{padding:26px 28px;}
+  .journey-body .stage{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold);}
+  .journey-body h3{font-size:21px; margin:8px 0 8px; color:var(--ink);}
+  .journey-body p{color:var(--ink-dim); font-size:15.5px; max-width:60ch;}
+  @media (max-width:600px){ .journey-row{grid-template-columns:64px 1fr;} .journey-mark{font-size:22px;} }
+
+  /* ---------- features ---------- */
+  .feature-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--panel-line); border:1px solid var(--panel-line); border-radius:14px; overflow:hidden;}
+  @media (max-width:820px){ .feature-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .feature-grid{grid-template-columns:1fr;} }
+  .feature{background:var(--panel); padding:30px 26px; transition:background .2s;}
+  .feature:hover{background:#222a3a;}
+  .feature .fi{font-size:22px; color:var(--gold); margin-bottom:14px; display:block;}
+  .feature h3{font-family:'Cinzel',serif; font-size:16px; font-weight:600; color:var(--ink); margin-bottom:8px;}
+  .feature p{color:var(--ink-dim); font-size:14.5px;}
+
+  /* ---------- ai table ---------- */
+  .ai-table{width:100%; border-collapse:collapse; font-size:14.5px;}
+  .ai-table th, .ai-table td{text-align:left; padding:14px 16px; border-bottom:1px solid var(--panel-line);}
+  .ai-table th{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-dim); font-weight:500;}
+  .ai-table td:first-child{font-family:'Cinzel',serif; color:var(--gold); white-space:nowrap;}
+  .ai-table tr:last-child td{border-bottom:none;}
+  .table-wrap{border:1px solid var(--panel-line); border-radius:14px; overflow:hidden; overflow-x:auto;}
+  .table-wrap table{min-width:640px;}
+
+  /* ---------- device mock ---------- */
+  .device-section .wrap{display:grid; grid-template-columns:0.85fr 1.15fr; gap:56px; align-items:center;}
+  @media (max-width:900px){ .device-section .wrap{grid-template-columns:1fr;} }
+  .phone{
+    width:260px; margin:0 auto; aspect-ratio:9/19.5; border-radius:34px; padding:9px;
+    background:#07080a; box-shadow:0 30px 60px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .phone-screen{
+    width:100%; height:100%; border-radius:26px; overflow:hidden; position:relative;
+    background:linear-gradient(180deg,#141419,#1a2133);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    font-family:'Cinzel',serif;
+  }
+  .phone-screen .pglyph{font-size:44px; color:var(--snake); text-shadow:0 0 18px rgba(58,145,66,0.5);}
+  .phone-screen h4{font-size:24px; letter-spacing:2px; margin:10px 0 2px; color:#f2d9cc;}
+  .phone-screen .psub{font-size:9px; color:var(--gold); letter-spacing:0.08em;}
+  .phone-screen .pbtn{
+    margin-top:22px; font-size:10px; padding:9px 20px; border-radius:16px; background:#f2c419; color:#1a1200;
+    font-family:'Cinzel',serif;
+  }
+  .device-copy .checklist{list-style:none; margin-top:24px; display:flex; flex-direction:column; gap:14px;}
+  .device-copy .checklist li{display:flex; gap:12px; color:var(--ink-dim); font-size:15px;}
+  .device-copy .checklist li::before{content:'𓋹'; color:var(--gold); flex:none;}
+
+  /* ---------- footer ---------- */
+  footer{padding:56px 0 40px; border-top:1px solid var(--panel-line);}
+  footer .wrap{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:24px;}
+  footer .fnote{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-dim); line-height:1.9; max-width:44ch;}
+  footer .flinks{display:flex; gap:22px; list-style:none;}
+  footer .flinks a{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim); text-decoration:none;}
+  footer .flinks a:hover{color:var(--gold);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><span class="glyph" aria-hidden="true">𓆙</span>MEHEN</div>
+    <ul>
+      <li><a href="#origin">The game</a></li>
+      <li><a href="#journey">How to play</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#ai">Opponents</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="glyphfield" aria-hidden="true">
+    <span style="top:8%; left:6%; transform:rotate(-14deg);">𓃭</span>
+    <span style="top:70%; left:3%; transform:rotate(20deg);">𓁿</span>
+    <span style="top:20%; left:88%; transform:rotate(8deg);">𓂀</span>
+    <span style="top:78%; left:90%; transform:rotate(-24deg);">𓀭</span>
+    <span style="top:44%; left:48%; transform:rotate(40deg); font-size:60px;">𓁨</span>
+  </div>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">iOS &middot; est. ~3000 BCE</p>
+      <h1>MEHEN</h1>
+      <p class="sub">GAME OF THE SNAKE</p>
+      <p class="lede">Hide your marbles. Read your opponent. Crawl the length of the coiled serpent, past a lurking lion, to reach Ra at the centre — one of the oldest board games on earth, rebuilt for iPhone and iPad.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-ghost" href="#journey">See how it's played</a>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <svg viewBox="0 0 460 460" id="spiral-svg">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#e2b13c" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#e2b13c" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="230" cy="230" r="150" fill="url(#glow)"/>
+        <path id="spiralPath" fill="none" stroke="none"/>
+        <text id="ra" x="230" y="235" text-anchor="middle" font-size="26" fill="#e2b13c">𓋹</text>
+        <circle id="piece" r="7" fill="#e2b13c"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="origin">
+  <div class="wrap origin-grid">
+    <div class="reveal">
+      <p class="eyebrow">The game</p>
+      <h2>Buried with the pharaohs, lost for four millennia</h2>
+      <p>Mehen boards have turned up in Egyptian tombs dating back to roughly 3000 BCE — carved as a coiled serpent, its body divided into dozens of numbered chambers spiralling in toward a single space at the centre. No rulebook survived. For thousands of years, nobody has known exactly how it was played.</p>
+      <p>This app follows the marble-guessing ruleset reconstructed by James F. R. Masters in his 2024 paper for the <em>Interdisciplinary Egyptology Journal</em> — one educated reading of the evidence among several, and, as far as we know, its first playable digital form.</p>
+      <p class="cite">Masters, J.F.R. (2024). "Mehen: The Game of the Snake." Interdisciplinary Egyptology Journal, Vienna.</p>
+    </div>
+    <div class="coil-diagram reveal">
+      <svg viewBox="0 0 300 300">
+        <path id="mini-spiral" fill="none" stroke="#8f6a3f" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="150" cy="150" r="14" fill="#e2b13c"/>
+        <text x="150" y="155" text-anchor="middle" font-size="13" fill="#1a1204" font-family="Cinzel, serif">𓋹</text>
+      </svg>
+      <div class="coil-legend">
+        <div><i style="background:#b98a52;"></i>The tail — where pieces enter</div>
+        <div><i style="background:#8f6a3f;"></i>The coil — the long crawl inward</div>
+        <div><i style="background:#e2b13c;"></i>Ra's chamber — journey's end</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">How to play</p>
+      <h2>Along the serpent, four turns of fortune</h2>
+      <p>Mehen isn't won by rolling well — it's won by guessing well. Every turn is a small act of bluffing, spiralling toward the same conclusion: whoever reaches Ra first, wins.</p>
+    </div>
+    <div class="journey reveal">
+      <div class="journey-row">
+        <div class="journey-mark">𓃭</div>
+        <div class="journey-body">
+          <p class="stage">The tail</p>
+          <h3>Entering the board</h3>
+          <p>A piece enters at the space equal to its owner's hidden marble count, minus one. Where you choose to hide sets where you begin.</p>
+        </div>
+      </div>
+      <div class="journey-row">
+        <div class="journey-mark">𓁿</div>
+        <div class="journey-body">
+          <p class="stage">The coil</p>
+          <h3>Hide, and guess</h3>
+          <p>Secretly cup one to five marbles. Your opponent calls a number. Guess wrong, and the hider advances a piece; guess right, and the guesser takes the move — or unleashes something worse.</p>
+        </div>
+      </div>
+      <div class="journey-row">
+        <div class="journey-mark">𓃰</div>
+        <div class="journey-body">
+          <p class="stage">The lion's pin</p>
+          <h3>A challenge, not a roll</h3>
+          <p>Win a guess, and you may pin an opponent's piece with a lion. It's frozen until its owner wins a marble challenge to slay the beast and break free.</p>
+        </div>
+      </div>
+      <div class="journey-row">
+        <div class="journey-mark">𓋹</div>
+        <div class="journey-body">
+          <p class="stage">Ra's sanctuary</p>
+          <h3>The finish</h3>
+          <p>First player to walk every one of their pieces from the tail to the centre space claims the game — and the favour of Ra.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Built for the board</p>
+      <h2>Every detail carved in</h2>
+      <p>A modern engine underneath a very old game — animated, tactile, and built to remember where you left off.</p>
+    </div>
+    <div class="feature-grid reveal">
+      <div class="feature">
+        <span class="fi">𓁨</span>
+        <h3>Spring-animated pieces</h3>
+        <p>Every move slides your piece along the true spiral path of the board, not a jump cut.</p>
+      </div>
+      <div class="feature">
+        <span class="fi">𓋹</span>
+        <h3>A burst at Ra</h3>
+        <p>Finishing a piece triggers a small particle flourish — a moment of payoff after a long crawl.</p>
+      </div>
+      <div class="feature">
+        <span class="fi">𓂀</span>
+        <h3>Full sound design</h3>
+        <p>Marble reveals, lion roars, and the triumph at the centre, with graceful system-sound fallbacks.</p>
+      </div>
+      <div class="feature">
+        <span class="fi">𓅓</span>
+        <h3>Resume where you left off</h3>
+        <p>Your game state autosaves after every turn, and picks back up exactly as you left it.</p>
+      </div>
+      <div class="feature">
+        <span class="fi">𓊪</span>
+        <h3>Built for iPad, too</h3>
+        <p>An adaptive side-by-side layout puts the board and your controls where your hands already are.</p>
+      </div>
+      <div class="feature">
+        <span class="fi">𓃭</span>
+        <h3>A log of every move</h3>
+        <p>A collapsible history of the last sixty moves, for replaying exactly how the game turned.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Opponents</p>
+      <h2>Three ways to be outguessed</h2>
+      <p>The AI doesn't just play randomly at the higher levels — it watches how you hide, and adjusts.</p>
+    </div>
+    <div class="table-wrap reveal">
+      <table class="ai-table">
+        <thead>
+          <tr><th>Level</th><th>Hides</th><th>Guesses</th><th>Unleashes the lion</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>𓃭 Easy</td><td>Purely at random</td><td>Purely at random</td><td>Never</td></tr>
+          <tr><td>𓁿 Medium</td><td>Weighted toward the extremes</td><td>Weighted toward the centre</td><td>Never</td></tr>
+          <tr><td>𓅓 Hard</td><td>Favours its least-used counts</td><td>Tracks your marble history</td><td>When you're 12+ spaces ahead</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="device-section" id="download">
+  <div class="wrap">
+    <div class="phone reveal">
+      <div class="phone-screen">
+        <div class="pglyph">𓆙</div>
+        <h4>MEHEN</h4>
+        <div class="psub">GAME OF THE SNAKE</div>
+        <div class="pbtn">𓃭 Begin the journey 𓃭</div>
+      </div>
+    </div>
+    <div class="device-copy reveal">
+      <p class="eyebrow">Take it with you</p>
+      <h2>One of the world's oldest games, on the device in your pocket</h2>
+      <p>No account, no ads, no in-app purchases — just a coiled board, a handful of marbles, and an opponent who's paying closer attention than you'd think.</p>
+      <ul class="checklist">
+        <li>iPhone and iPad, iOS 17 and later</li>
+        <li>Full rules and historical notes built in</li>
+        <li>Haptics and difficulty tuned in Settings</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fnote">
+      The true rules of Mehen have been lost for over 4,000 years. This app follows one educated reconstruction among several — a playable tribute to an ancient pastime.<br>
+      Sources: Masters (2024), Interdisciplinary Egyptology Journal · Masters (2023), Birmingham Egyptology Journal · Davies (1925)
+    </div>
+    <ul class="flinks">
+      <li><a href="#origin">The game</a></li>
+      <li><a href="#journey">Rules</a></li>
+      <li><a href="#features">Features</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+  // Build an Archimedean spiral path shared by the hero and diagram graphics.
+  function spiralPath(cx, cy, turns, startR, endR, steps){
+    let d = '';
+    for(let i=0;i<=steps;i++){
+      const t = i/steps;
+      const angle = t * turns * Math.PI * 2;
+      const r = startR + (endR-startR)*t;
+      const x = cx + r*Math.cos(angle);
+      const y = cy + r*Math.sin(angle);
+      d += (i===0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' ';
+    }
+    return d;
+  }
+
+  const heroPath = document.getElementById('spiralPath');
+  const heroD = spiralPath(230,230,3.4,150,14,220);
+  heroPath.setAttribute('d', heroD);
+  heroPath.setAttribute('stroke', '#3a2f1c');
+  heroPath.setAttribute('stroke-width', '14');
+  heroPath.setAttribute('stroke-linecap', 'round');
+  heroPath.setAttribute('opacity', '0.55');
+
+  // Alternating space dots along the coil, like the real board.
+  const spaceLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  document.getElementById('spiral-svg').insertBefore(spaceLayer, document.getElementById('ra'));
+  const dotCount = 46;
+  for(let i=0;i<dotCount;i++){
+    const t = i/dotCount;
+    const angle = t * 3.4 * Math.PI * 2;
+    const r = 150 + (14-150)*t;
+    const x = 230 + r*Math.cos(angle);
+    const y = 230 + r*Math.sin(angle);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', x.toFixed(2));
+    c.setAttribute('cy', y.toFixed(2));
+    c.setAttribute('r', 5);
+    c.setAttribute('fill', i%2===0 ? '#b98a52' : '#8f6a3f');
+    spaceLayer.appendChild(c);
+  }
+
+  const piece = document.getElementById('piece');
+  piece.style.offsetPath = "path('" + heroD.trim() + "')";
+  piece.animate(
+    [{ offsetDistance:'0%' }, { offsetDistance:'100%' }],
+    { duration: 9000, iterations: Infinity, easing:'linear' }
+  );
+
+  const miniPath = document.getElementById('mini-spiral');
+  miniPath.setAttribute('d', spiralPath(150,150,2.6,110,26,140));
+
+  // Scroll reveal
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold:0.15 });
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
