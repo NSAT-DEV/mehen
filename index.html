@@ -187,11 +187,35 @@
   .device-copy .checklist li{display:flex; gap:12px; color:var(--ink-dim); font-size:15px;}
   .device-copy .checklist li::before{content:'𓋹'; color:var(--gold); flex:none;}
 
+  /* ---------- App Store button + other platforms ---------- */
+  .btn-store{background:#000; color:#fff; border:1px solid rgba(255,255,255,0.28); padding:10px 22px 10px 18px; border-radius:14px; gap:12px;}
+  .btn-store:hover{border-color:var(--gold);}
+  .btn-store svg{width:26px; height:26px; flex:none;}
+  .btn-store .st{display:flex; flex-direction:column; line-height:1.1; text-align:left;}
+  .btn-store .st small{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:10.5px; letter-spacing:0.02em;}
+  .btn-store .st b{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif; font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+  .btn-store[hidden]{display:none;}
+  .device-copy .store-row{margin-top:30px;}
+  .others{padding:10px 0 80px;}
+  .others .box{border:1px solid var(--panel-line); border-radius:18px; background:var(--panel); padding:34px 32px;}
+  .others h3{font-family:'Cinzel',serif; font-size:22px; color:var(--ink); letter-spacing:0.02em;}
+  .others .box > p{color:var(--ink-dim); margin-top:8px; font-size:15px; max-width:60ch;}
+  .others .row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px;}
+  @media (max-width:700px){ .others .row{grid-template-columns:1fr;} .others .box{padding:26px 20px;} }
+  .other{display:flex; align-items:center; gap:16px; text-decoration:none; color:var(--ink);
+    background:var(--bg-top); border:1px solid var(--panel-line); border-radius:14px; padding:18px 20px;
+    transition:border-color .2s ease, transform .18s ease;}
+  .other:hover{border-color:var(--gold-dim); transform:translateY(-1px);}
+  .other svg{width:30px; height:30px; flex:none; color:var(--ink);}
+  .other b{display:block; font-family:'Cinzel',serif; font-size:16px; letter-spacing:0.03em;}
+  .other span{display:block; color:var(--ink-dim); font-size:13.5px; margin-top:2px;}
+  .other .arr{margin-left:auto; color:var(--gold); font-size:18px;}
+
   /* ---------- footer ---------- */
   footer{padding:56px 0 40px; border-top:1px solid var(--panel-line);}
   footer .wrap{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:24px;}
   footer .fnote{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-dim); line-height:1.9; max-width:44ch;}
-  footer .flinks{display:flex; gap:22px; list-style:none;}
+  footer .flinks{display:flex; flex-wrap:wrap; gap:12px 22px; list-style:none;}
   footer .flinks a{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-dim); text-decoration:none;}
   footer .flinks a:hover{color:var(--gold);}
 </style>
@@ -225,6 +249,10 @@
       <p class="sub">GAME OF THE SNAKE</p>
       <p class="lede">Hide your marbles. Read your opponent. Crawl the length of the coiled serpent, past a lurking lion, to reach Ra at the centre — one of the oldest board games on earth, rebuilt for iPhone and iPad.</p>
       <div class="hero-ctas">
+        <a class="btn btn-store" data-appstore href="#" hidden aria-label="Download Mehen on the App Store">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.7c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.1-.8-2.1-3.2ZM14.5 6.6c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.9 2.5.9.1 1.8-.4 2.5-1.1Z"/></svg>
+          <span class="st"><small>Download on the</small><b>App Store</b></span>
+        </a>
         <a class="btn btn-ghost" href="#journey">See how it's played</a>
       </div>
     </div>
@@ -416,6 +444,34 @@
         <li>Full rules and historical notes built in</li>
         <li>Haptics and difficulty tuned in Settings</li>
       </ul>
+      <div class="store-row">
+        <a class="btn btn-store" data-appstore href="#" hidden aria-label="Download Mehen on the App Store">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.7c0-2 1.6-3 1.7-3-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-2 .8-1.1 1.1-2.2 1.1-2.3 0 0-2.1-.8-2.1-3.2ZM14.5 6.6c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.9 2.5.9.1 1.8-.4 2.5-1.1Z"/></svg>
+        <span class="st"><small>Download on the</small><b>App Store</b></span>
+      </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="others" id="more">
+  <div class="wrap">
+    <div class="box reveal">
+      <p class="eyebrow">More ways to play</p>
+      <h3>Also on Android and desktop</h3>
+      <p>Mehen is also available for Android phones and tablets, and for Windows, Mac and Linux computers. Online games work across all of them, so you can play a friend on any device.</p>
+      <div class="row">
+        <a class="other" href="https://nsat-dev.github.io/mehen-droid/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.66-.38l-1.86 3.22a11.4 11.4 0 0 0-9.84 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52ZM7 15.25A1.25 1.25 0 1 1 8.25 14 1.25 1.25 0 0 1 7 15.25Zm10 0A1.25 1.25 0 1 1 18.25 14 1.25 1.25 0 0 1 17 15.25Z"/></svg>
+          <div><b>Android</b><span>Mehen for Android phones and tablets</span></div>
+          <span class="arr" aria-hidden="true">&rarr;</span>
+        </a>
+        <a class="other" href="https://nsat-dev.github.io/mehendesktop/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-6.5l.75 2H17a.75.75 0 0 1 0 1.5H7A.75.75 0 0 1 7 19h1.75l.75-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm.5 1.5v10h17v-10h-17Z"/></svg>
+          <div><b>Desktop</b><span>Mehen for Windows, Mac and Linux</span></div>
+          <span class="arr" aria-hidden="true">&rarr;</span>
+        </a>
+      </div>
     </div>
   </div>
 </section>
@@ -430,11 +486,20 @@
       <li><a href="#origin">The game</a></li>
       <li><a href="#journey">Rules</a></li>
       <li><a href="#features">Features</a></li>
+      <li><a href="https://nsat-dev.github.io/mehen-droid/">Android</a></li>
+      <li><a href="https://nsat-dev.github.io/mehendesktop/">Desktop</a></li>
     </ul>
   </div>
 </footer>
 
 <script>
+  // App Store listing for Mehen. Used by both "Download on the App Store" buttons;
+  // if this is ever left empty, the buttons are hidden rather than pointing nowhere.
+  const APP_STORE_URL = "https://apps.apple.com/us/app/mehen/id6760672362";
+  if (/^https:\/\/apps\.apple\.com\//.test(APP_STORE_URL)) {
+    document.querySelectorAll('[data-appstore]').forEach(a => { a.href = APP_STORE_URL; a.hidden = false; });
+  }
+
   // The board is drawn as static SVG with the same geometry as the app.
   // A piece travels the snake's body from the tail to the head, on a loop.
   const heroD = document.getElementById('spiralPath').getAttribute('d');
